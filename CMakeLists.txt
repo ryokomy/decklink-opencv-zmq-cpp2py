@@ -10,7 +10,11 @@ set (CMAKE_BUILD_TYPE Debug)
 find_package (OpenCV REQUIRED)
 #find_package (OpenCV 3.0 REQUIRED)
 
-include_directories(include)
+include_directories(include decklink-sdk/include)
 
-add_executable(pub src/pub.cpp include/DeckLinkAPIDispatch.cpp)
-target_link_libraries(pub ${OpenCV_LIBS} -lm -ldl -lpthread)
+add_executable(capture
+    src/Capture.cpp
+    src/Config.cpp
+    decklink-sdk/src/DeckLinkAPIDispatch.cpp
+    )
+target_link_libraries(capture ${OpenCV_LIBS} -lm -ldl -lpthread)
