@@ -39,6 +39,7 @@
 
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <zmq.hpp>
 
 static pthread_mutex_t	g_sleepMutex;
 static pthread_cond_t	g_sleepCond;
@@ -55,7 +56,8 @@ static unsigned long	g_frameCount = 0;
 // opencv
 cv::Mat yuvmat;
 cv::Mat rgbmat;
-
+zmq::context_t* context;
+zmq::socket_t* publisher;
 
 DeckLinkCaptureDelegate::DeckLinkCaptureDelegate() : m_refCount(1)
 {
@@ -135,8 +137,15 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 				}
 			}
 
+			// opencv
 			videoFrame->GetBytes((void**)&yuvmat.data);
 			cv::cvtColor(yuvmat, rgbmat, CV_YUV2BGR_Y422);
+			// zmq
+			int len = rgbmat.total() * rgbmat.channels();
+     	   	zmq::message_t message(len);
+	        memcpy (message.data(), rgbmat.data, len);
+        	bool rc = publisher->send (message);
+			if(!rc) std::cout << "failed zmq sending!" << std::endl;
 		}
 
 		if (rightEyeFrame)
@@ -212,6 +221,11 @@ int main(int argc, char *argv[])
 	// opencv
 	yuvmat = cv::Mat(1080, 1920, CV_8UC2);
 	rgbmat = cv::Mat(1080, 1920, CV_8UC3);
+	// zmq
+	context = new zmq::context_t(1);
+    publisher = new zmq::socket_t(*context, ZMQ_PUB);
+    publisher->bind("tcp://*:5555");
+
 
 	HRESULT							result;
 	int								exitStatus = 1;
@@ -407,6 +421,7 @@ int main(int argc, char *argv[])
 	}
 
 bail:
+
 	if (g_videoOutputFile != 0)
 		close(g_videoOutputFile);
 

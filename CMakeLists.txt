@@ -10,6 +10,9 @@ set (CMAKE_BUILD_TYPE Debug)
 find_package (OpenCV REQUIRED)
 #find_package (OpenCV 3.0 REQUIRED)
 
+find_package(cppzmq)
+include_directories(${cppzmq_INCLUDE_DIR})
+
 include_directories(include decklink-sdk/include)
 
 add_executable(capture
@@ -17,4 +20,4 @@ add_executable(capture
     src/Config.cpp
     decklink-sdk/src/DeckLinkAPIDispatch.cpp
     )
-target_link_libraries(capture ${OpenCV_LIBS} -lm -ldl -lpthread)
+target_link_libraries(capture ${OpenCV_LIBS} ${cppzmq_LIBRARY} -lm -ldl -lpthread)
