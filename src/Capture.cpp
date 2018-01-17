@@ -37,6 +37,9 @@
 #include "Capture.h"
 #include "Config.h"
 
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
 static pthread_mutex_t	g_sleepMutex;
 static pthread_cond_t	g_sleepCond;
 static int				g_videoOutputFile = -1;
@@ -48,6 +51,11 @@ static BMDConfig		g_config;
 static IDeckLinkInput*	g_deckLinkInput = NULL;
 
 static unsigned long	g_frameCount = 0;
+
+// opencv
+cv::Mat yuvmat;
+cv::Mat rgbmat;
+
 
 DeckLinkCaptureDelegate::DeckLinkCaptureDelegate() : m_refCount(1)
 {
@@ -126,6 +134,9 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 					write(g_videoOutputFile, frameBytes, videoFrame->GetRowBytes() * videoFrame->GetHeight());
 				}
 			}
+
+			videoFrame->GetBytes((void**)&yuvmat.data);
+			cv::cvtColor(yuvmat, rgbmat, CV_YUV2BGR_Y422);
 		}
 
 		if (rightEyeFrame)
@@ -198,6 +209,10 @@ static void sigfunc(int signum)
 
 int main(int argc, char *argv[])
 {
+	// opencv
+	yuvmat = cv::Mat(1080, 1920, CV_8UC2);
+	rgbmat = cv::Mat(1080, 1920, CV_8UC3);
+
 	HRESULT							result;
 	int								exitStatus = 1;
 	int								idx;
