@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "Config.h"
+#include "Config_ryokomy.h"
 
 BMDConfig::BMDConfig() :
 	m_deckLinkIndex(-1),
@@ -61,6 +62,9 @@ bool BMDConfig::ParseArguments(int argc,  char** argv)
 {
 	int		ch;
 	bool	displayHelp = false;
+
+	m_deckLinkIndex = Config_ryokomy::option_d;
+	m_displayModeIndex = Config_ryokomy::option_m;
 
 	while ((ch = getopt(argc, argv, "d:?h3c:s:v:a:m:n:p:t:")) != -1)
 	{
