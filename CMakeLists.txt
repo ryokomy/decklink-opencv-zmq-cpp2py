@@ -15,9 +15,9 @@ include_directories(${cppzmq_INCLUDE_DIR})
 
 include_directories(include decklink-sdk/include)
 
-add_executable(capture
+add_executable(publisher
     src/Capture.cpp
     src/Config.cpp
     decklink-sdk/src/DeckLinkAPIDispatch.cpp
     )
-target_link_libraries(capture ${OpenCV_LIBS} ${cppzmq_LIBRARY} -lm -ldl -lpthread)
+target_link_libraries(publisher ${OpenCV_LIBS} ${cppzmq_LIBRARY} -lm -ldl -lpthread)
