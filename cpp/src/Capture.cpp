@@ -40,6 +40,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <zmq.hpp>
+#include <chrono>
 
 static pthread_mutex_t	g_sleepMutex;
 static pthread_cond_t	g_sleepCond;
@@ -53,11 +54,12 @@ static IDeckLinkInput*	g_deckLinkInput = NULL;
 
 static unsigned long	g_frameCount = 0;
 
-// opencv
+// opencv & zmq
 cv::Mat yuvmat;
 cv::Mat rgbmat;
 zmq::context_t* context;
 zmq::socket_t* publisher;
+std::chrono::system_clock::time_point last_time, current_time;
 
 DeckLinkCaptureDelegate::DeckLinkCaptureDelegate() : m_refCount(1)
 {
@@ -116,11 +118,13 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 				}
 			}
 
+			/*
 			printf("Frame received (#%lu) [%s] - %s - Size: %li bytes\n",
 				g_frameCount,
 				timecodeString != NULL ? timecodeString : "No timecode",
 				rightEyeFrame != NULL ? "Valid Frame (3D left/right)" : "Valid Frame",
 				videoFrame->GetRowBytes() * videoFrame->GetHeight());
+			*/
 
 			if (timecodeString)
 				free((void*)timecodeString);
@@ -146,6 +150,13 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 	        memcpy (message.data(), rgbmat.data, len);
         	bool rc = publisher->send (message);
 			if(!rc) std::cout << "failed zmq sending!" << std::endl;
+			// chrono
+			if(g_frameCount%10==0){
+				current_time = std::chrono::system_clock::now();
+				float fps = 1000.0/(std::chrono::duration_cast<std::chrono::milliseconds>(current_time-last_time).count()/10.0);
+				std::cout << "FRAME RECEIVED: " << g_frameCount << ",  CAPTURE & PUBLISH FPS: " << fps << std::endl;
+				last_time = current_time;
+			}
 		}
 
 		if (rightEyeFrame)
